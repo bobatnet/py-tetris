@@ -1,9 +1,7 @@
-from curses import wrapper
 import asyncio
 import concurrent.futures
 
 from curses import wrapper, noecho, cbreak
-import curses
 
 from .blocks import any_block
 from .draw import LevelWindow, NotDrawable

@@ -1,11 +1,9 @@
-from asyncio.tasks import current_task
 import curses
-from typing import List, Optional, Type, Callable
+from typing import Optional, Type, Callable
 
 import numpy as np
-from numpy.core.defchararray import partition
 
-from .blocks import Block, Drawable, Static, new_canvas
+from .blocks import Block, Static, new_canvas
 
 CHAR_BLOCK = '*'
 
