@@ -37,7 +37,11 @@ async def motion(lwin: LevelWindow):
                 just_grounded = True
                 continue
             just_grounded = False
-        await asyncio.sleep(TIMER_SEC)
+
+        try:
+            await asyncio.wait_for(interact(lwin), timeout=TIMER_SEC)
+        except asyncio.TimeoutError:
+            continue
 
 
 async def interact(lwin: LevelWindow):
@@ -70,7 +74,10 @@ async def main(stdscr):
 
     lwin = LevelWindow(height=WIN_HEIGHT, width=WIN_WIDTH)
 
-    await asyncio.gather(motion(lwin), interact(lwin), return_exceptions=False)
+    try:
+        await asyncio.gather(motion(lwin), return_exceptions=False)
+    except Quit:
+        pass
 
 wrapper(lambda stdscr: asyncio.run(main(stdscr), debug=True))
 
