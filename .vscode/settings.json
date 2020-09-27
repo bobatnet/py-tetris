@@ -1,0 +1,15 @@
+{
+    "python.pythonPath": "/home/bob/.conda/envs/py38/bin/python",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.enabled": true
+}
