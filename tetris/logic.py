@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 
 from curses import wrapper, noecho, cbreak
+import curses
 
 from .blocks import any_block
 from .draw import LevelWindow, NotDrawable
@@ -20,6 +21,8 @@ class Quit(Exception):
 
 async def motion(lwin: LevelWindow):
     just_grounded = True
+
+    curses.halfdelay(int(TIMER_SEC*10))
 
     while True:
         async with level_locker:
@@ -47,21 +50,21 @@ async def motion(lwin: LevelWindow):
 async def interact(lwin: LevelWindow):
     loop = asyncio.get_running_loop()
 
-    key = ''
+    key = 0
     if win := lwin.sky:
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            key = await loop.run_in_executor(pool, win.getkey)
+        win.keypad(True)
+        key = win.getch()
 
-    if key == ' ':
+    if key == ord(' '):
         async with level_locker:
             if block := lwin.floating:
                 block.rotate_cw()
-    elif key.lower() == 'q' or key.lower() == 'esc':
+    elif key == ord('q') or key == ord('Q'):
         raise Quit
-    elif key == 'KEY_LEFT':
+    elif key == curses.KEY_LEFT:
         async with level_locker:
             lwin.float_move('left')
-    elif key == 'KEY_RIGHT':
+    elif key == curses.KEY_RIGHT:
         async with level_locker:
             lwin.float_move('right')
 
@@ -70,7 +73,6 @@ async def main(stdscr):
     stdscr.clear()
     noecho()
     cbreak()
-    stdscr.keypad(True)
 
     lwin = LevelWindow(height=WIN_HEIGHT, width=WIN_WIDTH)
 
