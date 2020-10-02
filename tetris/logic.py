@@ -8,7 +8,7 @@ from .blocks import any_block
 from .draw import LevelWindow, NotDrawable
 
 
-WIN_HEIGHT = 60
+WIN_HEIGHT = 40
 WIN_WIDTH = 30
 TIMER_SEC = 2.
 
@@ -34,9 +34,8 @@ async def motion(lwin: LevelWindow):
                 lwin.draw()
             except NotDrawable:
                 undo_move()
-                if just_grounded:
-                    raise Quit
                 lwin.make_grounded()
+                lwin.draw()
                 just_grounded = True
                 continue
             just_grounded = False
@@ -48,7 +47,6 @@ async def motion(lwin: LevelWindow):
 
 
 async def interact(lwin: LevelWindow):
-    loop = asyncio.get_running_loop()
 
     key = 0
     if win := lwin.sky:
@@ -74,7 +72,7 @@ async def main(stdscr):
     noecho()
     cbreak()
 
-    lwin = LevelWindow(height=WIN_HEIGHT, width=WIN_WIDTH)
+    lwin = LevelWindow(height=WIN_HEIGHT, width=WIN_WIDTH, full_window=stdscr)
 
     try:
         await asyncio.gather(motion(lwin), return_exceptions=False)

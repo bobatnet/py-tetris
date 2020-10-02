@@ -2,14 +2,11 @@ import curses
 from typing import Optional, Type, Callable
 
 import numpy as np
+from numpy.core.multiarray import where
 
-from .blocks import Block, Static, new_canvas
+from .blocks import Block, Static, new_canvas, NotDrawable
 
 CHAR_BLOCK = '*'
-
-
-class NotDrawable(RuntimeError):
-    pass
 
 
 class LevelWindow:
@@ -20,31 +17,27 @@ class LevelWindow:
     floating: Optional[Block]
     partition = 0
 
-    def __init__(self, height: int, width: int) -> None:
+    def __init__(self, height: int, width: int, full_window) -> None:
         self.height, self.width = height, width
         self.canvas = new_canvas(width, height)
-        self.grounded = Static(0, height)
+        self.grounded = Static(width, height)
         self.resize_bounds(0)
+        self.full_window = full_window
 
     def draw(self):
         canvas = self.canvas
         canvas.fill(False)
 
-        if not self.grounded.draw(canvas):
-            raise NotDrawable
-
-        if ground := self.ground:
-            self.draw_canvas(canvas, ground)
+        self.grounded.draw(canvas)
 
         if dx := self.floating:
-            if not dx.draw(canvas):
-                raise NotDrawable
+            dx.draw(canvas)
 
-        self.draw_canvas(canvas, self.sky)
+        self.full_window.clear()
+        self.draw_canvas(canvas, self.full_window)
 
     @staticmethod
     def draw_canvas(canvas: np.array, where):
-        where.clear()
         for yx, v in np.ndenumerate(canvas):
             if v:
                 where.addstr(*yx, CHAR_BLOCK)
@@ -75,7 +68,7 @@ class LevelWindow:
                     fx.left -= 1
             if dirn == 'right':
                 right = fx.pixels.shape[0] + fx.left
-                if right == self.width:
+                if right < self.width:
                     fx.left += 1
             return undo
         return lambda: None
@@ -85,7 +78,7 @@ class LevelWindow:
         if ground := self.ground:
             ground.clear()
         self.sky.clear()
-        self.resize_bounds(lift+self.partition)
+        self.resize_bounds(lift)
         self.grounded.join(self.floating)
         self.floating = None
 

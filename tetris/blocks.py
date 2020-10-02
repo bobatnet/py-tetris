@@ -3,6 +3,10 @@ from typing import Tuple
 import numpy as np
 
 
+class NotDrawable(RuntimeError):
+    pass
+
+
 class Drawable:
     pixels = np.empty((0, 0), dtype=bool)
     left, top = 0, 0
@@ -16,14 +20,17 @@ class Drawable:
                 if self.pixels[i, j]:
                     x, y = j+self.left, i+self.top
 
-                    if canvas[y, x]:
-                        return False
+                    try:
+                        if canvas[y, x]:
+                            raise NotDrawable
+                    except IndexError:
+                        raise NotDrawable
                     canvas[y, x] = True
         return True
 
     @property
     def right(self) -> int:
-        return self.pixels.shape[1] + self.right
+        return self.pixels.shape[1] + self.left
 
     @property
     def bottom(self) -> int:
@@ -31,6 +38,10 @@ class Drawable:
 
 
 class Static(Drawable):
+    def __init__(self, width: int, top: int) -> None:
+        super().__init__(0, top)
+        self.pixels = np.empty((0, width), dtype=bool)
+
     def join(self, obj: Drawable):
 
         if obj.top < self.top:
@@ -38,21 +49,12 @@ class Static(Drawable):
             self.pixels = np.vstack((new_rows, self.pixels))
             self.top = obj.top
 
-        if obj.left < self.left:
-            new_cols = np.zeros((self.pixels.shape[0], self.left-obj.left))
-            self.pixels = np.hstack((new_cols, self.pixels))
-            self.left = obj.left
-
-        if obj.right > self.right:
-            new_cols = np.zeros((self.pixels.shape[0], obj.right-self.right))
-            self.pixels = np.hstack((self.pixels, new_cols))
-
         if obj.bottom > self.bottom:
             assert False
-            new_rows = np.zeros((obj.bottom-self.bottom, self.pixels.shape[1]))
-            self.pixels = np.vstack((self.pixels, new_rows))
 
-        self.pixels[(obj.left-self.left):, :] = obj.pixels
+        old_pix = self.pixels[:(obj.bottom-obj.top), obj.left:obj.right]
+        new_pix = np.logical_or(obj.pixels, old_pix)
+        self.pixels[:(obj.bottom-obj.top), obj.left:obj.right] = new_pix
 
     def collapse(self):
         coll = np.any(self.pixels, axis=1).tolist()
@@ -87,4 +89,4 @@ def any_block():
 
 
 def new_canvas(wd: int, ht: int):
-    return np.zeros((wd, ht), dtype=bool)
+    return np.zeros((ht, wd), dtype=bool)
